@@ -9,6 +9,10 @@ import pandas
 import numpy as np
 import time
 import logging
+import redis
+REDIS = os.getenv("REDIS_HOST", "redis")
+
+r = redis.Redis(host=REDIS, port=6379, decode_responses=True)
 
 TDS_SIMULATIONS = "/simulations/"
 OUTPUT_FILENAME = os.getenv("PYCIEMSS_OUTPUT_FILEPATH")
@@ -27,7 +31,6 @@ def parse_samples_into_file(samples):
         else:
             pyciemss_results["params"][key] = value
 
-    print(pyciemss_results)
 
     file_output_json = {
         "0": {
@@ -129,7 +132,9 @@ def fetch_dataset(dataset: dict, tds_api):
     dataset_url = f"{tds_api}/datasets/{dataset['id']}/download-url?filename={dataset['filename']}"
     response = requests.get(dataset_url)
     df = pandas.read_csv(response.json()["url"])
-    df.rename(mapper=dataset["mappings"])
+    mapping = dataset.get("mappings",{})
+    if bool(mapping):
+        df.rename(columns=mapping)
     dataset_path = os.path.abspath("./temp.json")
     with open(dataset_path, "w") as file:
         df.to_csv(file, index=False)
@@ -137,9 +142,11 @@ def fetch_dataset(dataset: dict, tds_api):
 
 
 def attach_files(files: dict, tds_api, simulation_endpoint, job_id, status='complete'):
+
     sim_results_url = tds_api + simulation_endpoint + job_id
 
     if status!="error":
+        r.set(job_id, 100)
         for (location, handle) in files.items():   
             upload_url = f"{sim_results_url}/upload-url?filename={handle}"
             upload_response = requests.get(upload_url)
