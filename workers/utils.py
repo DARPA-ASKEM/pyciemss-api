@@ -107,6 +107,8 @@ def update_tds_status(url, status, result_files=[], start=False, finish=False):
     if result_files:
         tds_payload["result_files"] = result_files
 
+    print(json.dumps(tds_payload, default=str)) #TOSS
+
     update_response = requests.put(
         url, json=json.loads(json.dumps(tds_payload, default=str))
     )
@@ -188,3 +190,8 @@ def catch_job_status( function):
             logging.exception(log_message)
             raise e
     return wrapped
+
+
+def apply_timestamps(dataset, unix_timestamp, interval):
+    dataset["timestamp"] = dataset.apply(lambda row: unix_timestamp + interval*row["timepoint_id"], axis=1)
+

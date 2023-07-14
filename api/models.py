@@ -41,6 +41,11 @@ class Status(Enum):
         return Status(rq_status_to_tds_status[rq_status])
 
 
+class DateContext(BaseModel):
+    timestamp: int = Field(0, description = "timestamp to start at", example= 0)
+    interval: int = Field(1, description = "timestamp to start at", example= 1)
+
+
 class SimulateExtra(BaseModel):
     class Config:
         extra = ExtraEnum.allow
@@ -48,6 +53,11 @@ class SimulateExtra(BaseModel):
     num_samples: int = Field(
         100, description="number of samples for a CIEMSS simulation", example=100
     )
+
+    date_context: DateContext = Field(
+        DateContext(), description="Information used for datetime conversion", 
+    )
+    
 
 
 class CalibrateExtra(BaseModel):
@@ -79,6 +89,9 @@ class CalibrateExtra(BaseModel):
     # autoguide: pyro.infer.autoguide.AutoLowRankMultivariateNormal
     method: str = Field(
         "dopri5", description="Optional field for CIEMSS calibration", example="dopri5"
+    )
+    date_context: DateContext = Field(
+        DateContext(), description="Information used for datetime conversion", 
     )
 
 

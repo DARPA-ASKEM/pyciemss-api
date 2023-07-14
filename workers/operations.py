@@ -11,7 +11,8 @@ from utils import update_tds_status,\
                 fetch_dataset,\
                 fetch_model,\
                 attach_files,\
-                catch_job_status
+                catch_job_status,\
+                apply_timestamps
 
 from pyciemss.PetriNetODE.interfaces import (
     load_and_calibrate_and_sample_petri_model,
@@ -30,6 +31,7 @@ def simulate(*args, **kwargs):
     start = kwargs.pop("start")
     end = kwargs.pop("end")
     job_id = kwargs.pop("job_id")
+    date_context = kwargs.pop("date_context")
 
     sim_results_url = TDS_API + TDS_SIMULATIONS + job_id
 
@@ -44,6 +46,9 @@ def simulate(*args, **kwargs):
 
     output = load_and_sample_petri_model(amr_path, num_samples, timepoints=timepoints, **kwargs)
     samples = output.get('data')
+    if not None:
+        apply_timestamps(samples, date_context["timestamp"], date_context["interval"])
+        
     schema = output.get('visual')
     with open("visualization.json", "w") as f:
         json.dump(schema, f, indent=2)
@@ -59,6 +64,7 @@ def calibrate_then_simulate(*args, **kwargs):
     end = kwargs.pop("end")
     mappings = kwargs.pop("mappings", {})
     job_id = kwargs.pop("job_id")
+    date_context = kwargs.pop("date_context")
 
     sim_results_url = TDS_API + TDS_SIMULATIONS + job_id
 
@@ -79,6 +85,8 @@ def calibrate_then_simulate(*args, **kwargs):
         **kwargs
     )
     samples = output.get('data')
+    if not None:
+        apply_timestamps(samples, date_context["timestamp"], date_context["interval"])   
     schema = output.get('visual')
     with open("visualization.json", "w") as f:
         json.dump(schema, f, indent=2)
